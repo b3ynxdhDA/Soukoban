@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class GameController : MonoBehaviour
 {
-    #region 状態管理
     //フィールド操作クラスの定義
     FieldArrayData g_fieldArrayData;
 
@@ -75,6 +74,7 @@ public class GameController : MonoBehaviour
         {
             SetGameState(GameState.STOP);
         }
+
         //ゲームの状態によって処理を分ける
         switch (g_gameState)
         {
@@ -137,6 +137,8 @@ public class GameController : MonoBehaviour
                 {
                     g_inputState = false;
                 }
+
+
                 //クリア判定
                 if (g_fieldArrayData.GetGameClearJudgement())
                 {
@@ -144,12 +146,11 @@ public class GameController : MonoBehaviour
                 }
                 break;
             case GameState.BLOCK_MOVE:
+                print("動いた");
                 break;
             case GameState.END:
                 print("クリア");
                 break;
         }
     }
-
-    #endregion
 }

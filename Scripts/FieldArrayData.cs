@@ -78,6 +78,16 @@ public class FieldArrayData : MonoBehaviour
     //ターゲットの最大数
     private int g_targetMaxCount = 0;
 
+    /// <summary>
+    /// 過去の配置を記録する
+    /// 第一変数：g_playerMoveCountに対応
+    /// 第二、第三変数：g_fieldData
+    /// </summary>
+    private int[,,] g_fieldDataHistory = default;
+
+    //プレイヤーの移動回数
+    private int g_playerMoveCount = 0;
+
     #endregion
 
     #region MAP情報を配列に反映する
@@ -175,7 +185,7 @@ public class FieldArrayData : MonoBehaviour
         {
             //配列を出力するテスト
             print("Field---------------------------");
-            for(int y = 0; y<=g_verticalMaxCount; y++)
+            for (int y = 0; y <= g_verticalMaxCount; y++)
             {
                 string outPutString = "";
                 for (int x = 0; x <= g_horizontalMaxCount; x++)
@@ -241,6 +251,7 @@ public class FieldArrayData : MonoBehaviour
 
         //移動したら元のデータは削除する
         g_fieldDate[preRow, preCol] = NO_BLOOK;
+        
     }
     /// <summary>
     /// ブロックを移動することが可能かチェックする
@@ -279,6 +290,7 @@ public class FieldArrayData : MonoBehaviour
         }
 
         bool moveFlag = BlockMoveCheck(nextRow, nextCol);
+
         //移動可能かチェックする
         if (moveFlag)
         {
@@ -286,6 +298,24 @@ public class FieldArrayData : MonoBehaviour
             MoveData(preRow, preCol, nextRow, nextCol);
         }
         return moveFlag;
+    }
+    /// <summary>
+    /// 配置を一つ前に戻す
+    /// </summary>
+    public void FieldDataBack()
+    {
+        g_playerMoveCount--;
+
+        //ステージ状態を巻き戻す
+        for (int y = 0; y <= g_verticalMaxCount; y++)
+        {
+            for (int x = 0; x <= g_horizontalMaxCount; x++)
+            {
+                //まだ未完成10/17
+                g_fieldDate[y, x] = g_fieldDataHistory[g_playerMoveCount, y, x];
+
+            }
+        }
     }
 
     #endregion
@@ -336,13 +366,27 @@ public class FieldArrayData : MonoBehaviour
     public void PlayerMove(int preRow, int preCol, int nextRow, int nextCol)
     {
         //移動可能かチェックする
-        if(PlayerMoveCheck(preRow, preCol, nextRow, nextCol))
+        if (PlayerMoveCheck(preRow, preCol, nextRow, nextCol))
         {
             //移動が可能な場合移動する
             MoveData(preRow, preCol, nextRow, nextCol);
             //プレイヤーの位置を更新する
             //座標情報なので最初の引数はX
             PlayerPosition = new Vector2(nextRow, nextCol);
+
+            //プレイヤーの移動数を更新
+            g_playerMoveCount++;
+
+            //ステージ状態を記録
+            for (int y = 0; y <= g_verticalMaxCount; y++)
+            {
+                for (int x = 0; x <= g_horizontalMaxCount; x++)
+                {
+                    g_fieldDataHistory[g_playerMoveCount, y, x] = g_fieldDate[y, x];
+                }
+            }
+
+            //print(g_playerMoveCount);
         }
     }
     #endregion
