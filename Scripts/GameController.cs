@@ -138,6 +138,11 @@ public class GameController : MonoBehaviour
                     g_inputState = false;
                 }
 
+                //
+                if (Input.GetButtonDown("Back"))
+                {
+                    g_fieldArrayData.FieldDataBack();
+                }
 
                 //クリア判定
                 if (g_fieldArrayData.GetGameClearJudgement())

@@ -83,7 +83,7 @@ public class FieldArrayData : MonoBehaviour
     /// 第一変数：g_playerMoveCountに対応
     /// 第二、第三変数：g_fieldData
     /// </summary>
-    private int[,,] g_fieldDataHistory = default;
+    private int[,,] g_fieldDataHistory = new int[100, 30, 30];
 
     //プレイヤーの移動回数
     private int g_playerMoveCount = 0;
@@ -245,7 +245,9 @@ public class FieldArrayData : MonoBehaviour
             //縦は座標との兼ね合いで-をつけて逆転させないでみる
             //座標情報なので最初の引数はx
             moveObject.transform.position = new Vector2(nextCol, nextRow);
+            print("MoveData : " + moveObject);
         }
+        //g_fieldData上の処理
         //上書きするので要注意
         g_fieldDate[nextRow, nextCol] = g_fieldDate[preRow, preCol];
 
@@ -282,6 +284,7 @@ public class FieldArrayData : MonoBehaviour
     /// <param name="nextCol">移動後横情報</param>
     public bool BlockMove(int preRow,int preCol,int nextRow,int nextCol)
     {
+        print("BlockMove");
         //境界線外エラー
         if(nextRow < 0 || nextCol < 0 || 
            nextRow > g_verticalMaxCount || nextCol > g_horizontalMaxCount)
@@ -304,16 +307,37 @@ public class FieldArrayData : MonoBehaviour
     /// </summary>
     public void FieldDataBack()
     {
-        g_playerMoveCount--;
+        if(g_playerMoveCount == 0)
+        {
+            return;
+        }
+        //プレイヤーの移動回数を減らす
+         g_playerMoveCount--;
+
+        print(g_playerMoveCount);
+
+        int preNumber = 0;
+        int[] preRow = new int[10];
+        int[] preCol = new int[10];
+        int nextRow = 0;
+        int nextCol = 0;
 
         //ステージ状態を巻き戻す
         for (int y = 0; y <= g_verticalMaxCount; y++)
         {
             for (int x = 0; x <= g_horizontalMaxCount; x++)
             {
-                //まだ未完成10/17
-                g_fieldDate[y, x] = g_fieldDataHistory[g_playerMoveCount, y, x];
+                //g_playerMoveCountからg_playerMoveCount-1にしたとき
+                //プレイヤーのいち、moveBlockの位置、moveBlockがあった位置
+                //を探す
+                if (g_fieldDate[y, x] == 2 ||
+                   g_fieldDate[y, x] == 3)
+                {
+                    preRow[preNumber] = y;
+                    preCol[preNumber] = x;
+                }
 
+                g_fieldDate[y, x] = g_fieldDataHistory[g_playerMoveCount, y, x];
             }
         }
     }
@@ -370,10 +394,11 @@ public class FieldArrayData : MonoBehaviour
         {
             //移動が可能な場合移動する
             MoveData(preRow, preCol, nextRow, nextCol);
+
             //プレイヤーの位置を更新する
             //座標情報なので最初の引数はX
             PlayerPosition = new Vector2(nextRow, nextCol);
-
+            print("PlayerMove");
             //プレイヤーの移動数を更新
             g_playerMoveCount++;
 
@@ -386,7 +411,7 @@ public class FieldArrayData : MonoBehaviour
                 }
             }
 
-            //print(g_playerMoveCount);
+            print(g_playerMoveCount);
         }
     }
     #endregion
