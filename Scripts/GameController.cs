@@ -138,7 +138,7 @@ public class GameController : MonoBehaviour
                     g_inputState = false;
                 }
 
-                //
+                //フィールドの状態を1つ戻す 
                 if (Input.GetButtonDown("Back"))
                 {
                     g_fieldArrayData.FieldDataBack();
