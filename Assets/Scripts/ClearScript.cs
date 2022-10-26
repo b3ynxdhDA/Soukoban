@@ -1,15 +1,32 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using GameState;
+using UnityEngine.EventSystems;
 
-public class ClearScript : MonoBehaviour
+namespace Game
 {
-    void Update()
+    public class ClearScript : MonoBehaviour
     {
-        //if()
-        {
+        public static ClearScript instance;
 
+        [Header("クリアUIで最初に選択されているボタン")]
+        [SerializeField] GameObject _firstSelectButton = default;
+
+        //EventSystem
+        [SerializeField] GameObject _eventSystem = default;
+
+        private EventSystem _system = default;
+
+        private void Start()
+        {
+            _system = _eventSystem.GetComponent<EventSystem>();
+            SetClearUI();
+        }
+
+        public void SetClearUI()
+        {
+            _system.firstSelectedGameObject = _firstSelectButton;
+            //print("fdajslk;");
         }
     }
 }

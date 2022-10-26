@@ -380,7 +380,7 @@ public class FieldArrayData : MonoBehaviour
         //動くブロックの移動
         if ((bool)backDatalist[0])
         {
-            print("ブロックも");
+            //print("ブロックも");
             MoveData((int)backDatalist[1], (int)backDatalist[2], (int)backDatalist[3], (int)backDatalist[4]);
             backDatalist[0] = false;
         }

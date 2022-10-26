@@ -1,14 +1,13 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Game;
 
-
-namespace GameState
+namespace Game
 {
     public class GameController : MonoBehaviour
     {
-        //インスタンス化
-        GameController instance;
+        [SerializeField] GameObject clearObj;
 
         //フィールド操作クラスの定義
         FieldArrayData g_fieldArrayData;
@@ -68,12 +67,13 @@ namespace GameState
         //キーパットの入力状態
         bool g_inputState = false;
 
+        //ゲームクリア判定
+        public bool isGameClear = false;
+
         private void Awake()
         {
             //コンポーネント取得
             g_fieldArrayData = GetComponent<FieldArrayData>();
-            //インスタンス
-            instance = gameObject.GetComponent<GameController>();
         }
 
         private void Update()
@@ -162,6 +162,7 @@ namespace GameState
                     //print("動いた");
                     break;
                 case GameState.END:
+                    clearObj.SetActive(true);
 
                     break;
             }
