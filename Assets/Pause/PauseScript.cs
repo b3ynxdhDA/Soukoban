@@ -18,7 +18,7 @@ public class PauseScript : MonoBehaviour
     void Update()
     {
 
-        if (Input.GetKeyDown(KeyCode.P))
+        if (Input.GetButtonDown("Pause"))
         {
             //ポーズUIのアクティブを切り替え
             pauseUI.SetActive(!pauseUI.activeSelf);
