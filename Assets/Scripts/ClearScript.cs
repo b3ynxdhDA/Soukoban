@@ -21,6 +21,7 @@ namespace Game
         {
             _system = _eventSystem.GetComponent<EventSystem>();
             SetClearUI();
+            print("UI");
         }
 
         public void SetClearUI()

@@ -7,7 +7,7 @@ namespace Game
 {
     public class GameController : MonoBehaviour
     {
-        [SerializeField] GameObject clearObj;
+        [SerializeField] GameObject clearObj = null;
 
         //フィールド操作クラスの定義
         FieldArrayData g_fieldArrayData;
