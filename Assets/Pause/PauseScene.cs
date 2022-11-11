@@ -8,9 +8,28 @@ public class PauseScene : MonoBehaviour
 {
     //EventSystemのFirstSelectedに
     //呼び出した時に選択状態にするボタンオブジェクトをアタッチして
+
+
     [SerializeField] GameObject u_ChangeScreenText = null;
 
-    private bool isScreenMode = true;
+    //trueならWindow,falseならFullScreen
+    private bool isScreenMode = false;
+
+    //
+    const int width = 1920;
+    private void Start()
+    {
+        if (Screen.width < width)
+        {
+            u_ChangeScreenText.GetComponent<Text>().text = "< Window >";
+            isScreenMode = true;
+        }
+        else
+        {
+            u_ChangeScreenText.GetComponent<Text>().text = "< Full Screen >";
+            isScreenMode = false;
+        }
+    }
 
     public void OnScreenChange()
     {

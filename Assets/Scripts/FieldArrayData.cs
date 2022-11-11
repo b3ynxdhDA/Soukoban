@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Playerやブロックの配置、移動などを管理するクラス
+/// </summary>
 public class FieldArrayData : MonoBehaviour
 {
     
@@ -33,13 +36,13 @@ public class FieldArrayData : MonoBehaviour
     };
 
     [Header("動かないオブジェクトを設定(Tagを識別する)")]
-    [SerializeField] GameObject g_staticBlock;
+    [SerializeField] GameObject g_staticBlock = default;
     [Header("動くオブジェクトを設定(Tagを識別する)")]
-    [SerializeField] GameObject g_moveBlock;
+    [SerializeField] GameObject g_moveBlock = default;
     [Header("プレイヤーオブジェクトを設定(Tagを識別する)")]
-    [SerializeField] GameObject g_player;
+    [SerializeField] GameObject g_player = default;
     [Header("ターゲットオブジェクトを設定(Tagを識別する)")]
-    [SerializeField] GameObject g_target;
+    [SerializeField] GameObject g_target = default;
 
     /// <summary>
     /// フィールドデータ用の変数を定義
@@ -53,7 +56,7 @@ public class FieldArrayData : MonoBehaviour
         {0,0,0,0,0,0, },
     };
 
-    //縦横の最大数
+    //縦横のフィールドの幅
     private int g_horizontalMaxCount = 0;
     private int g_verticalMaxCount = 0;
 
@@ -81,31 +84,43 @@ public class FieldArrayData : MonoBehaviour
 
     /// <summary>
     /// 過去の配置を記録する
-    /// 第一変数：g_BackDataCountに対応
+    /// 第一変数：g_backDataCountに対応
     /// 第二、第三変数：g_fieldData
     /// </summary>
     private int[,,] g_fieldDataHistory = new int[100, 30, 30];
 
     /// <summary>
-    /// 0:(bool)MoveBlockが動いたか
-    /// 1:(int)preMoveBlockRow
-    /// 2:(int)preMoveBlockCol
-    /// 3:(int)nextMoveBlockRow
-    /// 4:(int)nextMoveBlockCol
-    /// 5:(int)prePlayerRow
-    /// 6:(int)prePlayerCol
-    /// 7:(int)nexPlayertRow
-    /// 8:(int)nextPlayerCol
+    /// ISMOVE:(bool)MoveBlockが動いたか
+    /// PRE_MB_ROW:現在のMoveBlockの行位置
+    /// PRE_MB_COL:現在のMoveBlockの列位置
+    /// NEXT_MB_ROW:移動先のMoveBlockの行位置
+    /// NEXT_MB_COL:移動先のMoveBlockの列位置
+    /// PRE_PLAYER_ROW:現在のPlayerの行位置
+    /// PRE_PLAYER_COL:現在のPlayerの列位置
+    /// NEXT_PLAYER_ROW:移動先のPlayerの行位置
+    /// NEXT_PLAYER_COL:移動先のPlayerの列位置
     /// </summary>
+    const int ISMOVE = 0;
+    const int PRE_MB_ROW = 1;
+    const int PRE_MB_COL = 2;
+    const int NEXT_MB_ROW = 3;
+    const int NEXT_MB_COL = 4;
+    const int PRE_PLAYER_ROW = 5;
+    const int PRE_PLAYER_COL = 6;
+    const int NEXT_PLAYER_ROW = 7;
+    const int NEXT_PLAYER_COL = 8;
     ArrayList backDatalist = new ArrayList()
     { false, -1, -1, -1, -1, -1, -1, -1, -1};
 
 
     //プレイヤーの移動回数
-    private int g_PlayerMoveCount = 0;
+    private int g_playerMoveCount = 0;
 
     //履歴配列のカウンター
-    private int g_BackDataCount = 0;
+    private int g_backDataCount = 0;
+
+    //undoの折り返しの基準値(Length-2)
+    private int g_historyEnd = 0;
 
     #endregion
 
@@ -160,7 +175,7 @@ public class FieldArrayData : MonoBehaviour
             {
                 for (int x = 0; x <= g_horizontalMaxCount; x++)
                 {
-                    g_fieldDataHistory[g_BackDataCount, y, x] = g_fieldDate[y, x];
+                    g_fieldDataHistory[g_backDataCount, y, x] = g_fieldDate[y, x];
                 }
             }
         }
@@ -191,7 +206,7 @@ public class FieldArrayData : MonoBehaviour
                 g_verticalMaxCount = positionY;
             }
         }
-        //フィールド配列の初期化
+        //フィールド配列の初期化(フィールドの壁ブロック分 + 1)
         g_fieldDate = new int[g_verticalMaxCount + 1, g_horizontalMaxCount + 1];
     }
 
@@ -205,6 +220,7 @@ public class FieldArrayData : MonoBehaviour
     {
         SetFieldMaxSize();
         ImageToArray();
+        g_historyEnd = g_fieldDataHistory.GetLength(0) - 2;
     }
 
     private void Update()
@@ -220,7 +236,7 @@ public class FieldArrayData : MonoBehaviour
                 for (int x = 0; x <= g_horizontalMaxCount; x++)
                 {
                     outPutString += g_fieldDate[y, x];
-                    //outPutString += g_fieldDataHistory[g_BackDataCount,y,x];
+                    //outPutString += g_fieldDataHistory[g_backDataCount,y,x];
                 }
                 print(outPutString);
             }
@@ -233,11 +249,11 @@ public class FieldArrayData : MonoBehaviour
     }
 
     /// <summary>
-    /// g_BackDataCountをほかのスクリプトにわたす
+    /// g_backDataCountをほかのスクリプトにわたす
     /// </summary>
     public int GetMoveCount()
     {
-        return g_PlayerMoveCount;
+        return g_playerMoveCount;
     }
 
     #region ブロックを動かす処理
@@ -333,15 +349,15 @@ public class FieldArrayData : MonoBehaviour
             return false;
         }
 
-        bool moveFlag = BlockMoveCheck(nextRow, nextCol);
+        bool isMove = BlockMoveCheck(nextRow, nextCol);
 
         //移動可能かチェックする
-        if (moveFlag)
+        if (isMove)
         {
             //移動が可能な場合移動する
             MoveData(preRow, preCol, nextRow, nextCol);
         }
-        return moveFlag;
+        return isMove;
     }
     #endregion
 
@@ -352,15 +368,15 @@ public class FieldArrayData : MonoBehaviour
     public void FieldDataBack()
     {
 
-        if (g_BackDataCount == 0)
+        if (g_backDataCount == 0)
         {
             return;
         }
         //プレイヤーの移動回数を減らす
-        g_PlayerMoveCount--;
-        g_BackDataCount--;
+        g_playerMoveCount--;
+        g_backDataCount--;
 
-        //print(g_BackDataCount);
+        //print(g_backDataCount);
 
         //ステージをひとつ前の状態と比較するui
         for (int y = 0; y <= g_verticalMaxCount; y++)
@@ -372,55 +388,62 @@ public class FieldArrayData : MonoBehaviour
         }
 
         //Playerの移動
-        MoveData((int)backDatalist[5], (int)backDatalist[6], (int)backDatalist[7], (int)backDatalist[8]);
+        MoveData((int)backDatalist[PRE_PLAYER_ROW], (int)backDatalist[PRE_PLAYER_COL], (int)backDatalist[NEXT_PLAYER_ROW], (int)backDatalist[NEXT_PLAYER_COL]);
         //プレイヤーの位置を更新する
         //座標情報なので最初の引数はX
-        PlayerPosition = new Vector2((int)backDatalist[7], (int)backDatalist[8]);
+        PlayerPosition = new Vector2((int)backDatalist[NEXT_PLAYER_ROW], (int)backDatalist[NEXT_PLAYER_COL]);
 
         //動くブロックの移動
         if ((bool)backDatalist[0])
         {
             //print("ブロックも");
-            MoveData((int)backDatalist[1], (int)backDatalist[2], (int)backDatalist[3], (int)backDatalist[4]);
-            backDatalist[0] = false;
+            MoveData((int)backDatalist[PRE_MB_ROW], (int)backDatalist[PRE_MB_COL], (int)backDatalist[NEXT_MB_ROW], (int)backDatalist[NEXT_MB_COL]);
+            backDatalist[ISMOVE] = false;
         }
     }
-
+    /// <summary>
+    /// 現在のフィールドと1つ前のフィールド情報を比較して
+    /// 一致しないますの位置情報をbackDatalistに記録
+    /// </summary>
+    /// <param name="row"></param>
+    /// <param name="col"></param>
     public void GetDifferentPosition(int row, int col)
     {
-
-        //g_fieldDataとg_fieldDataHistory比較して
-        //一致しないますを抽出
-        if (g_fieldDate[row, col] != g_fieldDataHistory[g_BackDataCount, row, col])
+        //g_fieldDataとg_fieldDataHistory比較
+        if (g_fieldDate[row, col] != g_fieldDataHistory[g_backDataCount, row, col])
         {
+            //g_fieldDateのMoveBlockの位置を
+            //移動前情報として記録
             if (g_fieldDate[row, col] == 2)
             {
-                backDatalist[1] = row;
-                backDatalist[2] = col;
-                backDatalist[0] = true;
+                backDatalist[PRE_MB_ROW] = row;
+                backDatalist[PRE_MB_COL] = col;
+                backDatalist[ISMOVE] = true;
             }
-
-            if (g_fieldDate[row, col] == 3)
+            //g_fieldDateのPlayerの位置を
+            //移動前情報として記録
+            else if (g_fieldDate[row, col] == 3)
             {
-                backDatalist[5] = row;
-                backDatalist[6] = col;
+                backDatalist[PRE_PLAYER_ROW] = row;
+                backDatalist[PRE_PLAYER_COL] = col;
             }
 
-            if (g_fieldDataHistory[g_BackDataCount, row, col] == 2)
+            //g_fieldDataHistoryのMoveBlockの位置を
+            //移動後情報として記録
+            if (g_fieldDataHistory[g_backDataCount, row, col] == 2)
             {
                 //print("MoveBlock");
-                backDatalist[3] = row;
-                backDatalist[4] = col;
-                backDatalist[0] = true;
+                backDatalist[NEXT_MB_ROW] = row;
+                backDatalist[NEXT_MB_COL] = col;
+                backDatalist[ISMOVE] = true;
             }
-
-            if (g_fieldDataHistory[g_BackDataCount, row, col] == 3)
+            //g_fieldDataHistoryのPlayerの位置を
+            //移動後情報として記録
+            else if (g_fieldDataHistory[g_backDataCount, row, col] == 3)
             {
-                backDatalist[7] = row;
-                backDatalist[8] = col;
+                backDatalist[NEXT_PLAYER_ROW] = row;
+                backDatalist[NEXT_PLAYER_COL] = col;
             }
-
-            //print((bool)backDatalist[0]);
         }
     }
 
@@ -482,31 +505,28 @@ public class FieldArrayData : MonoBehaviour
             PlayerPosition = new Vector2(nextRow, nextCol);
 
             //プレイヤーの移動数を更新
-            g_PlayerMoveCount++;
-            g_BackDataCount++;
+            g_playerMoveCount++;
+            g_backDataCount++;
 
             //ステージ状態を記録
             for (int y = 0; y <= g_verticalMaxCount; y++)
             {
                 for (int x = 0; x <= g_horizontalMaxCount; x++)
                 {
-                    g_fieldDataHistory[g_BackDataCount, y, x] = g_fieldDate[y, x];
+                    g_fieldDataHistory[g_backDataCount, y, x] = g_fieldDate[y, x];
 
                     //配列の末尾になったら
-                    if (g_BackDataCount >= 98)
+                    if (g_backDataCount >= g_historyEnd)
                     {
-                        g_fieldDataHistory[g_BackDataCount - 98, y, x] = g_fieldDate[y, x];
+                        g_fieldDataHistory[g_backDataCount - g_historyEnd, y, x] = g_fieldDate[y, x];
                     }
                 }
             }
 
-            if(g_BackDataCount >= 99)
+            if(g_backDataCount > g_historyEnd)
             {
-                g_BackDataCount = 1;
+                g_backDataCount = 1;
             }
-
-            //print("PlayerMove");
-            //print(g_BackDataCount);
         }
     }
     #endregion
@@ -519,11 +539,7 @@ public class FieldArrayData : MonoBehaviour
     public bool GetGameClearJudgement()
     {
         //ターゲットクリア数とターゲットの最大数が一致したらゲームクリア
-        if(g_targetClearCount == g_targetMaxCount)
-        {
-            return true;
-        }
-        return false;
+        return g_targetClearCount == g_targetMaxCount;
     }
     #endregion
 }

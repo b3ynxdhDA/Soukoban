@@ -5,6 +5,13 @@ using UnityEngine.SceneManagement;
 
 public class TitleScript : MonoBehaviour
 {
+    const int width = 1280;
+    const int height = 720;
+    private void Awake()
+    {
+        // width:横解像度, height:縦解像度, bool:フルスクリーンにするかどうか
+        Screen.SetResolution(width, height, false);
+    }
     public void OnStart()
     {
         SceneManager.LoadScene("MaineScene");
