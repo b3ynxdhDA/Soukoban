@@ -1,2 +1,0 @@
-Soukobanトークン    『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』
-リポジトリURL　　　https://github.com/b3ynxdhDA/Soukoban.git
